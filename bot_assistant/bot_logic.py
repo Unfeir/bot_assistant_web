@@ -1,9 +1,10 @@
 from appdirs import AppDirs
-from bot_assistant.address_book_classes import AddressBook, AddressContact, Birthday, EmailContact, Phone, Record
 from colorama import Fore, Style, init
+import os.path
+from bot_assistant.address_book_classes import AddressBook, AddressContact, Birthday, EmailContact, Phone, Record
 from bot_assistant.notes_classes import Notes, Note, Tag, Body
 from bot_assistant.sort import sort_fun
-import os.path
+from viewer import ContactSearch, ContactShow, ContactsShow, NoteShow, NoteSearch, NoteSearchTag
 
 init()
 
@@ -295,16 +296,15 @@ def show_contact(args):
     """
     Функція виводить всі контакти в книзі. Якщо передано імя виведе данні по цьому контакту
     """
-    separate = 30 * '-'
+
     if args:
         name = args[0].capitalize()
-        return f'{separate} \n{PHONE_BOOK.get(name, "no such name")} \n{separate}'
+        if name in PHONE_BOOK:
+            return ContactShow().show(PHONE_BOOK, name)
+        else:
+            return f'no contacts with such request: {name}'
 
-    result = ''
-    for contact in PHONE_BOOK:
-        result += f'\n{PHONE_BOOK[contact]} \n{separate}'
-
-    return result
+    return ContactsShow().show(PHONE_BOOK)
 
 
 @input_error
@@ -313,18 +313,10 @@ def search_contacts(args):
     Функція для пошуку контакту.
     """
 
-    if not args:
-        return show_contact(args)
-
-    result = ""
-    contacts = PHONE_BOOK.search_contacts(args)
-
-    if contacts:
-        for contact in contacts:
-            result += show_contact([contact.name.value]) +'\n'
-        return result
-     
-    return f"no contacts with such request: {args[0]}"
+    if args:
+        return ContactSearch().show(PHONE_BOOK, args)
+    else:
+        return ContactsShow().show(PHONE_BOOK)
 
 
 @input_error
@@ -627,9 +619,11 @@ def sort_notes(args):
     else:
         return NOTES.sort_notes()
 
-
+@input_error
 def show_notes(args):
-    return NOTES.get_notes()
+    # return NOTES.get_notes()
+    return NoteShow().show(NOTES)
+
 
 
 @input_error
@@ -638,7 +632,7 @@ def search_notes(args):
     Функція для пошуку нотатки.
     """
     text = ' '.join(args)
-    return NOTES.search(text)
+    return NoteSearch().show(notes=NOTES, search_text=text)
 
 
 @input_error
@@ -653,7 +647,7 @@ def search_tag(args):
         result = ""
         for i in search_args:
             print(i)
-            result += NOTES.search_by_tag(i)
+            result += NoteSearchTag().show(NOTES, i) #NOTES.search_by_tag(i)
         if result:
             return result
         else:
@@ -701,43 +695,6 @@ def load(*args):
 
     return f"{Fore.RED}data loaded from {DIRS.user_data_dir}{Style.RESET_ALL}"
 
-
-# def parser(text):
-#     """
-#     Функція формує кортеж із назви функції і аргументів для неї.
-#     """
-
-#     if text:
-#         normalise_text = text.replace(
-#             "good bye", "good_bye").replace("show all", "show_all").replace("upcoming birthday", "upcoming_birthday") \
-#             .replace("add address", "add_address").replace("add birthday", "add_birthday") \
-#             .replace("add bd", "add_birthday").replace("add bday", "add_birthday") \
-#             .replace("search contacts", "search_contacts").replace("add phone", "add_phone") \
-#             .replace("change phone", "change_phone").replace("change phones", "change_phone") \
-#             .replace("change address", "change_address").replace("change adr", "change_address") \
-#             .replace("delete phone", "delete_phone").replace("del phone", "delete_phone") \
-#             .replace("add note", "add_note").replace("del note", "del_note").replace("delete note", "del_note") \
-#             .replace("change note", "change_note").replace("change tag", "change_tag") \
-#             .replace("sort notes", "sort_notes").replace("search notes", "search_notes").replace("search note",
-#                                                                                                  "search_notes") \
-#             .replace("search tag", "search_tag").replace("search tags", "search_tag").replace("show notes",
-#                                                                                               "show_notes") \
-#             .replace("del birthday", "del_birthday").replace("delete birthday", "del_birthday").replace("del bd",
-#                                                                                                         "del_birthday") \
-#             .replace("delete bd", "del_birthday").replace("delete bday", "del_birthday").replace("del bday",
-#                                                                                                  "del_birthday") \
-#             .replace("add email", "add_email").replace("change email", "change_email").replace("delete email",
-#                                                                                                "delete_email") \
-#             .replace("search birthday", "search_birthday").replace("search bd", "search_birthday") \
-#             .replace("show contact", "show_contact").replace("show contacts", "show_contact") \
-#             .replace("delete contact", "delete_contact").replace("del contact", "delete_contact") \
-#             .replace("delete address", "delete_address").replace("del address", "delete_address") \
-#             .replace("save", "save").replace("load", "load") \
-#             .replace("change birthday", "change_birthday").replace("change bd", "change_birthday").replace(
-#             "change bday", "change_birthday")
-
-#         # формуємо кортеж із назви функції і аргументів для неї
-#         return normalise_text.split()[0], normalise_text.split()[1:]
 
 ##############################################################################################################################
 
@@ -837,7 +794,6 @@ def fun_name(fun):
         "change bday": change_birthday,
         "change bd": change_birthday,
         "change address": change_address,
-        "search contacts": search_contacts,
         "sort": sort_fun,
         "add note": add_note,
         "del note": del_note,
@@ -853,6 +809,7 @@ def fun_name(fun):
         "change phone": change_phone,
         "delete phone": delete_phone,
         "del phone": delete_phone,
+        "search contacts": search_contacts,
         "show contact": show_contact,
         "add email": add_email,
         "change email": change_email,
