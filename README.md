@@ -78,4 +78,4 @@ Commands:
 
 ## License
 
-[MIT](LICENSE) © Vladislav Timoshcuk, Anton Holovin, Andrew Subotin, Sergii Kashpurenko
+[MIT](LICENSE) © Anton Holovin
